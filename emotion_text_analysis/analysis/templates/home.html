@@ -1,0 +1,33 @@
+<!-- analysis/templates/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Emotion Analysis</title>
+</head>
+<body>
+    <h1>YouTube Emotion Analysis</h1>
+    <form id="videoForm" method="POST" action="{% url 'process_video' %}">
+        {% csrf_token %}
+        <label for="url">YouTube Video URL:</label>
+        <input type="text" id="url" name="url" required>
+        <button type="submit">Analyze Video</button>
+    </form>
+    <p id="result"></p>
+
+    <script>
+        document.getElementById('videoForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData(document.getElementById('videoForm'));
+            const response = await fetch("{% url 'process_video' %}", {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            console.log(result)
+            document.getElementById('result').innerText = result.message;
+        };
+    </script>
+</body>
+</html>
