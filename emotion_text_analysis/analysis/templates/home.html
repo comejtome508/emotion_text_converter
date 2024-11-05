@@ -14,7 +14,16 @@
         <input type="text" id="url" name="url" required>
         <button type="submit">Analyze Video</button>
     </form>
-    <p id="result"></p>
+    <!-- Section to display transcript and emotions -->
+    <div id="results" style="margin-top: 20px;">
+        <h2>Transcription</h2>
+        <p id="transcript">Waiting for transcription...</p>
+        
+        <h2>Emotions</h2>
+        <ul id="emotions">
+            <!-- Emotions will be appended here -->
+        </ul>
+    </div>
 
     <script>
         document.getElementById('videoForm').onsubmit = async function(event) {
@@ -25,8 +34,26 @@
                 body: formData,
             });
             const result = await response.json();
-            console.log(result)
-            document.getElementById('result').innerText = result.message;
+            
+            if (result.status === 'success') {
+                // Call the transcription function once the audio is processed
+                const transcriptionResponse = await fetch("{% url 'transcribe_audio' %}");
+                const transcriptionResult = await transcriptionResponse.json();
+
+                // Display the transcript and emotions
+                document.getElementById('transcript').innerText = transcriptionResult.transcript;
+
+                // Clear existing emotions and add new ones
+                const emotionsList = document.getElementById('emotions');
+                emotionsList.innerHTML = "";  // Clear previous emotions
+                transcriptionResult.emotions.forEach(emotion => {
+                    const listItem = document.createElement('li');
+                    listItem.innerText = `${emotion.label}: ${emotion.score.toFixed(2)}`;
+                    emotionsList.appendChild(listItem);
+                });
+            } else {
+                document.getElementById('transcript').innerText = result.message;
+            }
         };
     </script>
 </body>

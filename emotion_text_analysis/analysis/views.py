@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from pytube import YouTube
+from transformers import pipeline
 import os
 import yt_dlp
+import whisper
 
 def home(request):
     return render(request, 'home.html')
@@ -28,19 +30,25 @@ def process_video(request):
             return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'})
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-# def process_video(request):
-#     if request.method == 'POST':
-#         url = request.POST.get('url')
-#         try:
-#             yt = YouTube(url)
-#             audio_stream = yt.streams.filter(only_audio=True).first()
-#             if audio_stream:
-#                 audio_stream.download(output_path='/Desktop', filename='video_audio.mp4')
-#                 return JsonResponse({'status': 'success', 'message': 'Audio extracted successfully!'})
-#             else:
-#                 return JsonResponse({'status': 'error', 'message': 'Audio stream not found.'})
-#         except Exception as e:
-#             print(f"Error: {e}")  # Print the specific error for debugging
-#             return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'})
-#     else:
-#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+
+def transcribe_audio(request):
+    # Assuming the audio file is saved as 'media/video_audio.mp3'
+    audio_path = "video_audio.mp3"
+
+    # Load the Whisper model
+    model = whisper.load_model("base")
+    
+    # Transcribe the audio file
+    result = model.transcribe(audio_path)
+    transcript = result['text']
+    
+    # Emotion analysis
+    emotion_classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
+    emotions = emotion_classifier(transcript)
+
+    # Return results as JSON
+    return JsonResponse({
+        'transcript': transcript,
+        'emotions': emotions
+    })
